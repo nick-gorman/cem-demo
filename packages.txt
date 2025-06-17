@@ -1,7 +1,0 @@
-# List any apt packages needed for deployment
-# For example, if you need system libraries:
-# libglib2.0-0
-# libsm6
-# libxext6
-# libxrender-dev
-# libgomp1
