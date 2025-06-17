@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(export PATH=\"$HOME/.local/bin:$PATH\")",
+      "Bash(uv run:*)",
+      "Bash(UV_PROJECT_ENVIRONMENT=.venv-claude uv run python tests/run_all_tests.py)",
+      "Bash(python -m pytest test_optimization.py -v)"
+    ],
+    "deny": []
+  }
+}

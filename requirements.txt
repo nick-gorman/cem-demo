@@ -1,0 +1,6 @@
+streamlit==1.45.1
+numpy==2.3.0
+pandas==2.3.0
+matplotlib==3.10.3
+scipy==1.15.3
+pypsa==0.34.1
