@@ -629,17 +629,17 @@ st.write('Click the button below to run the system optimization using linear pro
 
 if st.button('Run Optimization', type='primary'):
     with st.spinner('Running optimization...'):
-        # Calculate loads
-        base_load = df['Aggregate'].values
+        # Calculate loads and convert from kW to MW
+        base_load = df['Aggregate'].values / 1000  # Convert kW to MW
         
         # Add inflexible EV load if EVs exist
         if num_ev_households > 0:
             inflexible_ev_ratio = 1 - (flex_adoption / 100)
-            inflexible_ev_load = ev_profiles['Total_EV_Load'].values * inflexible_ev_ratio
+            inflexible_ev_load = ev_profiles['Total_EV_Load'].values * inflexible_ev_ratio / 1000  # Convert kW to MW
             fixed_load = base_load + inflexible_ev_load
             
-            # Calculate flexible EV energy requirement
-            flexible_ev_energy = ev_profiles['Total_EV_Load'].sum() * (flex_adoption / 100)
+            # Calculate flexible EV energy requirement (convert kWh to MWh)
+            flexible_ev_energy = ev_profiles['Total_EV_Load'].sum() * (flex_adoption / 100) / 1000
         else:
             fixed_load = base_load
             flexible_ev_energy = 0
@@ -717,33 +717,33 @@ if st.button('Run Optimization', type='primary'):
             else:
                 ax_demand.axvspan(flex_start, flex_end, alpha=0.1, color='lightgreen', label='Flexible Charging Window')
         
-        # Plot base household load
-        ax_demand.fill_between(range(24), 0, base_load, 
+        # Plot base household load (convert back to kW for display)
+        ax_demand.fill_between(range(24), 0, base_load * 1000, 
                               label='Household Load', color='lightblue', alpha=0.7)
         
         # Plot inflexible EV demand if applicable
         if num_ev_households > 0:
-            inflexible_ev_load = ev_profiles['Total_EV_Load'].values * inflexible_ev_ratio
-            ax_demand.fill_between(range(24), base_load, base_load + inflexible_ev_load,
+            inflexible_ev_load_kw = inflexible_ev_load * 1000
+            ax_demand.fill_between(range(24), base_load * 1000, (base_load + inflexible_ev_load) * 1000,
                                  label='Inflexible EV Charging', color='purple', alpha=0.5)
-            current_top = base_load + inflexible_ev_load
+            current_top = (base_load + inflexible_ev_load) * 1000
         else:
-            current_top = base_load
+            current_top = base_load * 1000
         
         # Plot flexible EV on top if applicable
         if flexible_ev_energy > 0:
-            flex_ev_charging = network.flex_ev_charging
-            total_load = current_top + flex_ev_charging
-            ax_demand.fill_between(range(24), current_top, total_load,
+            flex_ev_charging_kw = network.flex_ev_charging * 1000
+            total_load_kw = current_top + flex_ev_charging_kw
+            ax_demand.fill_between(range(24), current_top, total_load_kw,
                                  label='Flexible EV Charging', color='red', alpha=0.5)
-            ax_demand.plot(range(24), total_load, 'darkred', linewidth=2, 
+            ax_demand.plot(range(24), total_load_kw, 'darkred', linewidth=2, 
                          label='Total Demand')
         else:
             ax_demand.plot(range(24), current_top, 'darkblue', linewidth=2, 
                          label='Total Demand')
         
         ax_demand.set_xlabel('Hour of Day')
-        ax_demand.set_ylabel('Demand (MW)')
+        ax_demand.set_ylabel('Demand (kW)')
         ax_demand.set_title('Electricity Demand Profile (Excluding Storage)')
         ax_demand.legend()
         ax_demand.grid(True, alpha=0.3)
@@ -757,22 +757,22 @@ if st.button('Run Optimization', type='primary'):
         
         fig_balance, ax_balance = plt.subplots(figsize=(12, 6))
         
-        # Plot generation (stacked area)
+        # Plot generation (stacked area) - convert to kW
         ax_balance.fill_between(range(24), 0, 
-                               network.generators_t.p["solar"].values,
+                               network.generators_t.p["solar"].values * 1000,
                                label='Solar', color='orange', alpha=0.7)
         
-        wind_bottom = network.generators_t.p["solar"].values
+        wind_bottom = network.generators_t.p["solar"].values * 1000
         ax_balance.fill_between(range(24), wind_bottom,
-                               wind_bottom + network.generators_t.p["wind"].values,
+                               wind_bottom + network.generators_t.p["wind"].values * 1000,
                                label='Wind', color='skyblue', alpha=0.7)
         
         # Add storage discharge to supply
-        storage_power = network.storage_units_t.p["battery"].values
+        storage_power = network.storage_units_t.p["battery"].values * 1000
         storage_discharge = np.maximum(storage_power, 0)
         storage_charge = np.minimum(storage_power, 0)  # Negative values
         
-        total_renewable = network.generators_t.p["solar"].values + network.generators_t.p["wind"].values
+        total_renewable = (network.generators_t.p["solar"].values + network.generators_t.p["wind"].values) * 1000
         ax_balance.fill_between(range(24), total_renewable,
                                total_renewable + storage_discharge,
                                label='Storage Discharge', color='green', alpha=0.7)
@@ -783,9 +783,9 @@ if st.button('Run Optimization', type='primary'):
         
         # Plot total demand as a single line (without storage)
         if flexible_ev_energy > 0:
-            total_demand = fixed_load + network.flex_ev_charging
+            total_demand = (fixed_load + network.flex_ev_charging) * 1000
         else:
-            total_demand = fixed_load
+            total_demand = fixed_load * 1000
         
         ax_balance.plot(range(24), total_demand, 'k-', linewidth=3, 
                        label='Total Demand')
@@ -794,7 +794,7 @@ if st.button('Run Optimization', type='primary'):
         ax_balance.axhline(y=0, color='gray', linestyle='-', alpha=0.3)
         
         ax_balance.set_xlabel('Hour of Day')
-        ax_balance.set_ylabel('Power (MW)')
+        ax_balance.set_ylabel('Power (kW)')
         ax_balance.set_title('Supply and Demand Balance')
         ax_balance.legend()
         ax_balance.grid(True, alpha=0.3)
@@ -808,24 +808,25 @@ if st.button('Run Optimization', type='primary'):
         
         fig_cap, ax_cap = plt.subplots(figsize=(10, 6))
         
+        # Convert MW to kW for display
         capacities = {
-            'Solar': network.generators.loc['solar', 'p_nom_opt'],
-            'Wind': network.generators.loc['wind', 'p_nom_opt'],
-            'Storage': network.storage_units.loc['battery', 'p_nom_opt']
+            'Solar': network.generators.loc['solar', 'p_nom_opt'] * 1000,
+            'Wind': network.generators.loc['wind', 'p_nom_opt'] * 1000,
+            'Storage': network.storage_units.loc['battery', 'p_nom_opt'] * 1000
         }
         
         colors = ['orange', 'skyblue', 'green']
         bars = ax_cap.bar(range(len(capacities)), list(capacities.values()), color=colors)
         ax_cap.set_xticks(range(len(capacities)))
         ax_cap.set_xticklabels(list(capacities.keys()))
-        ax_cap.set_ylabel('Capacity (MW)')
+        ax_cap.set_ylabel('Capacity (kW)')
         ax_cap.set_title('Optimal Generation and Storage Capacities')
         
         # Add value labels on bars
         for bar, value in zip(bars, capacities.values()):
             height = bar.get_height()
             ax_cap.text(bar.get_x() + bar.get_width()/2., height,
-                       f'{value:.1f}',
+                       f'{value:.0f}',
                        ha='center', va='bottom')
         
         ax_cap.grid(True, alpha=0.3, axis='y')
