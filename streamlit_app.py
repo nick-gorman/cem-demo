@@ -115,24 +115,18 @@ def generate_household_load_profiles(num_households=20, hours=24):
     return df
 
 # Streamlit app
-st.title('The Energy System Optimisation Modelling Paradigm: A Toy Example')
+st.title('Households to the energy system')
 
-st.markdown("""
-    - Walk through
-    - Explore the effect of inputs
-    - Discuss the 'intervention points'
-""")
+st.markdown("A simple demonstration of the current practices for modelling household behaviour.")
+
+st.markdown("Deepening a shared understanding of current modelling processes.")
+
+st.markdown("An opportunity to reflect on the possible 'intervention points' for SFL.")
 
 # Section 1: Exogenous Energy Demand
-st.header('Section 1: Fixed Energy Demand')
+st.header('Section 1: Exogenous Energy Demand')
 
-st.markdown(
-    """
-    - Energy demand determined as a modelling input
-    - Demand varies across the days and years but usage amounts and patterns cannot change with variations in the relative 
-      abundance/scarcity or emissions intensity of energy
-    - The behaviour of people is 'fixed' regardless of how the system at large develops within the optimisation model.
-    """)
+st.markdown('Exogenous to the optimisation model / determined prior to and as an input for the optimisation model.')
 
 # Generate data
 def load_data():
@@ -142,11 +136,6 @@ df = load_data()
 
 # Plot individual household load profiles
 st.subheader('1.1 Individual Household Load Profiles')
-st.markdown("""
-- Household energy use could be calculated individually. For example, across a representative sample of households.
-- While techno economic techniques are often used, energy system optimisation modelling is largely agnostic as to how
-  household energy demand determined.
-""")
 
 fig1, ax1 = plt.subplots(figsize=(12, 6))
 
@@ -164,12 +153,6 @@ st.pyplot(fig1)
 
 # Calculate and plot aggregate load profile
 st.subheader('1.2 Aggregate Load Profile')
-st.markdown("""
-- However, demand is typically represented at a regionally aggregated level. Either by aggregating modelled 
-  profiles or simply by growing historical demand according to economic trends.
-- And regardless of if energy demand is calculated at an aggregate or household level, it is the aggregate load profile
-  which influences model outcomes.    
-""")
 
 df['Aggregate'] = df.sum(axis=1)
 
@@ -187,12 +170,7 @@ ax2.set_xticks(range(0, 24, 2))
 st.pyplot(fig2)
 
 # EV Charging Section
-st.subheader('1.3 New technologies/practices: EV Example ')
-st.markdown("""
-- New technologies, such as EVs, are often modelled as distinct new loads that are added to the aggregate demand
-- There is no reason this couldn't be done at a household level
-- While a simple example is given here, there is no hard limitations on methods that can be used
-  """)
+st.subheader('1.3 New technologies: EV Example')
 
 # EV parameters widgets
 col1, col2 = st.columns(2)
@@ -380,27 +358,12 @@ else:
     st.info('Select number of households with EVs to see charging analysis')
 
 # Section 2: Endogenous Energy Demand
-st.header('Section 2: Evolving Energy Demand (Practices)')
+st.header('Section 2: Endogenous Energy Demand')
 
-st.markdown("""
-- Energy demand (practices) change/co-evolve with the system energy system at large
-- Allows the response of automated technologies and people to the relative abundance/scarcity and emissions to be modelled
-- Requires some equivalence between cost and willingness to engage to be made.
-- Typically implemented with demand as a 'flexible resource' deployed for the benefit of the system. Is this framing 
-  inherent to optimisation modelling? 
-""")
+st.markdown('Endogenous to the optimisation model / determined as an output of the optimisation model.')
 
 # Flexible EV Charging
 st.subheader('2.1 Example: Flexible EV Charging')
-
-st.markdown("""
-- Constraints on charging start and and end times might be used to represent household practices
-- 'Adoption rates', while simplistic, represent the general willingness of people to engage in adapting to large 
-   system-level changes.
-- Additional constraints or terms in the objective function could be added to represent households in a more nuanced 
-  manner. For example, maybe flexibility is more constrained on long weekends, or (in the case of air conditioning) 
-  during heatwaves.
-""")
 
 # Flexible charging parameters
 st.write('Configure the flexible charging window to optimize EV charging times')
